@@ -1,0 +1,20 @@
+# ====================
+# Run Configuration
+# ====================
+run:
+  name: model_1
+  runs_dir: ./runs/model_1
+
+# ====================
+# Training Parameters
+# ====================
+
+# ====================
+# Model Configuration
+# ====================
+model:
+  backbone: microsoft/mdeberta-v3-base
+
+# ====================
+# Dataset Configuration
+# ====================
