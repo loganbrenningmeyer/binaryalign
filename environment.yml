@@ -13,6 +13,7 @@ dependencies:
   - pyyaml
   - pytorch
   - torchvision
+  - pytorch-cuda=12.1
 
   - pip:
     - -e .
