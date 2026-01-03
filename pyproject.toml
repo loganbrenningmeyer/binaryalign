@@ -13,7 +13,10 @@ dependencies = [
     "numpy",
     "tqdm",
     "omegaconf",
-    "transformers"
+    "transformers",
+    "tokenizers",
+    "sentencepiece",
+    "protobuf"
 ]
 
 [tool.setuptools.packages.find]

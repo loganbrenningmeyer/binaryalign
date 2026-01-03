@@ -11,7 +11,7 @@ dependencies:
   - setuptools
   - wheel
   - pyyaml
-  - pytorch
+  - pytorch>=2.6
   - torchvision
   - pytorch-cuda=12.1
 
