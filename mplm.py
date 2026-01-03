@@ -6,4 +6,3 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModel.from_pretrained(model_name)
 
 print(model)
-print(tokenizer)
