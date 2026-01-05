@@ -1,3 +1,6 @@
+# Gold Standard Github
+* https://github.com/TariqYousef/Word-Alignment-Gold-Standards
+
 # English-French
 
 ### Hansards (Mihalcea and Peterson, 2003)
@@ -12,18 +15,18 @@
 
 ## Training Set
 
-### Czech-English
+### Czech-English (CC BY-SA 4.0)
 * https://ufal.mff.cuni.cz/czech-english-manual-word-alignment
 
 ### Dutch-English (unavailable)
 
-### Hindi-English
+### Hindi-English (not specified)
 * https://web.eecs.umich.edu/~mihalcea/wpt05/
 
-### Turkish-English
+### Turkish-English (No commercial use)
 * http://tools.nlp.itu.edu.tr
 
-### Spanish-English / Portuguese-English
+### Spanish-English / Portuguese-English (no copyright restriction)
 * https://www.hlt.inesc-id.pt/w/Word_Alignments
 
 ## Validation Set
@@ -32,20 +35,20 @@
 
 ## Testing Set
 
-### German-English
+### German-English (No commercial use)
 * https://www-i6.informatik.rwth-aachen.de/goldAlignment/
 
-### Swedish-English
+### Swedish-English (no copyright restriction)
 * https://www.ida.liu.se/divisions/hcs/nlplab/resources/ges/
 
-### French-English (Hansards)
+### French-English (Hansards) (no restriction)
 * https://web.eecs.umich.edu/~mihalcea/wpt/
 
-### Romanian-English
+### Romanian-English (no restriction)
 * https://web.eecs.umich.edu/~mihalcea/wpt05/
 
-### Japanese-English
+### Japanese-English (CC BY-SA 3.0)
 * https://www.phontron.com/kftt/
 
-### Chinese-English
+### Chinese-English (not specified)
 * https://nlp.csai.tsinghua.edu.cn/~ly/systems/TsinghuaAligner/TsinghuaAligner.html
