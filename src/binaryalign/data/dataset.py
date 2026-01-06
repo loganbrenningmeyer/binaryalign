@@ -2,6 +2,7 @@ import json
 import random
 from pathlib import Path
 from torch.utils.data import Dataset
+from collections import defaultdict
 
 
 class BinaryAlignDataset(Dataset):
@@ -76,16 +77,23 @@ class LanguagePairDataset(Dataset):
         for sent_idx, source_sent in enumerate(self.src_sentences):
             self.instances.extend([(sent_idx, src_idx) for src_idx in range(len(source_sent))])
 
+        # ----------
+        # Define src_idx -> tgt_idxs mapping
+        # ----------
+        self.aligned = []
+        for sent_pairs in self.alignments:
+            pairs = defaultdict(set)
+            for src_word_idx, tgt_word_idx in sent_pairs:
+                pairs[src_word_idx].add(tgt_word_idx)
+            self.aligned.append(pairs)
+
     def __getitem__(self, idx: int):
         sent_idx, src_idx = self.instances[idx]
 
         src_words = self.src_sentences[sent_idx]
         tgt_words = self.tgt_sentences[sent_idx]
 
-        tgt_word_idxs = {
-            j for (i, j) in self.alignments[sent_idx]
-            if i == src_idx
-        }
+        tgt_word_idxs = self.aligned[sent_idx].get(src_idx, set())
 
         return {
             "src_words": src_words,

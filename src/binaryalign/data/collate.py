@@ -23,7 +23,7 @@ class BinaryAlignCollator:
         # Encode marked source words / get target mask
         # ----------
         encoding = self.tokenizer.encode_marked_batch(src_batch, tgt_batch, src_idxs)
-        tgt_mask = self.tokenizer.get_target_mask_batch(encoding)
+        tgt_mask = (encoding["token_type_ids"] == 1)
 
         input_ids = encoding["input_ids"] # (B, L)
         attention_mask = encoding["attention_mask"] # (B, L)
@@ -37,13 +37,12 @@ class BinaryAlignCollator:
         for b in range(B):
             aligned_set = aligned_sets[b] # {aligned target word indices}
             word_idxs = encoding.word_ids(b) # token -> word index
-            seq_ids = encoding.sequence_ids(b) # token -> source (0) or target (1)
 
-            for l, seq_id in enumerate(seq_ids):
+            for l, word_idx in enumerate(word_idxs):
                 # ----------
                 # If target word is aligned, label = 1
                 # ----------
-                if seq_id == 1 and word_idxs[l] in aligned_set:
+                if tgt_mask[b, l] and word_idx in aligned_set:
                     labels[b, l] = 1.0
 
         labels_target = labels[tgt_mask]

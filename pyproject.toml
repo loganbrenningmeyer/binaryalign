@@ -15,6 +15,7 @@ dependencies = [
     "omegaconf",
     "transformers",
     "tokenizers",
+    "safetensors",
     "sentencepiece",
     "protobuf"
 ]

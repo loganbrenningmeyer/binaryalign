@@ -1,6 +1,7 @@
 import os
 import argparse
 import wandb
+import time
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -65,7 +66,7 @@ def main():
     # ----------
     # Load tokenizer/backbone
     # ----------
-    tokenizer = BinaryAlignTokenizer(config.model.backbone)
+    tokenizer = BinaryAlignTokenizer(model_name=config.model.backbone, max_length=config.model.max_length)
     backbone = load_backbone(config.model.backbone, tokenizer.vocab_size)
 
     # ----------
@@ -97,14 +98,16 @@ def main():
         pretrain_dataset, 
         batch_size=config.data.batch_size, 
         shuffle=False,
-        collate_fn=collator
+        collate_fn=collator,
+        num_workers=4
     )
 
     finetune_loader = DataLoader(
         finetune_dataset,
         batch_size=config.data.batch_size,
         shuffle=False,
-        collate_fn=collator
+        collate_fn=collator,
+        num_workers=4
     )
 
     # ====================
