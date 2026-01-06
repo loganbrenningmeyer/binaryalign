@@ -40,18 +40,16 @@ class BinaryAlignCollator:
 
             for l, word_idx in enumerate(word_idxs):
                 # ----------
-                # If target word is aligned, label = 1
+                # If target word is aligned and not None (pad), label = 1
                 # ----------
-                if tgt_mask[b, l] and word_idx in aligned_set:
+                if tgt_mask[b, l] and (word_idx is not None) and (word_idx in aligned_set):
                     labels[b, l] = 1.0
-
-        labels_target = labels[tgt_mask]
 
         return {
             "input_ids": input_ids,
             "attention_mask": attention_mask,
             "target_mask": tgt_mask,
-            "labels_target": labels_target
+            "labels": labels
         }
 
 

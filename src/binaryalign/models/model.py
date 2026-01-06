@@ -12,11 +12,14 @@ class BinaryAlignModel(nn.Module):
         self.backbone = backbone
         self.classifier = classifier
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     def forward(
         self,
         input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        target_mask: torch.Tensor,
+        attention_mask: torch.Tensor
     ):
         # ----------
         # Get backbone final hidden state
@@ -30,9 +33,7 @@ class BinaryAlignModel(nn.Module):
         logits = self.classifier(hidden_states)  # (B, L, 1)
         logits = logits.squeeze(-1)  # (B, L)
 
-        logits_target = logits[target_mask]  # (T)
-
-        return logits_target
+        return logits
     
     @torch.no_grad()
     def predict(
@@ -53,8 +54,10 @@ class BinaryAlignModel(nn.Module):
         """
         self.eval()
 
-        logits = self.forward(input_ids, attention_mask, target_mask)
+        logits = self.forward(input_ids, attention_mask)    # (B, L)
         scores = torch.sigmoid(logits)
-        preds = scores >= threshold
 
-        return preds
+        mask = target_mask & attention_mask.bool()          # (B, L)
+        preds = (scores >= threshold) & mask                # (B, L)
+
+        return preds, scores, mask

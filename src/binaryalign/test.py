@@ -7,6 +7,7 @@ from omegaconf import OmegaConf, DictConfig
 
 from binaryalign.models import BinaryAlignClassifier, BinaryAlignModel, load_backbone
 from binaryalign.tokenization import BinaryAlignTokenizer
+from binaryalign.inference.align import BinaryAlign
 
 
 def load_config(config_path: str) -> DictConfig:
@@ -61,40 +62,32 @@ def main():
     model.eval()
 
     # ----------
+    # Create BinaryAlign inference model
+    # ----------
+    src_lang = test_config.inference.src.lang
+    tgt_lang = test_config.inference.tgt.lang
+
+    binaryalign = BinaryAlign(model, tokenizer, src_lang, tgt_lang)
+
+    # ----------
     # Run inference on test samples
     # ----------
     threshold = test_config.inference.threshold
 
-    src_lang = test_config.inference.src.lang
     src_sentences = test_config.inference.src.sentences
-
-    tgt_lang = test_config.inference.tgt.lang
     tgt_sentences = test_config.inference.tgt.sentences
 
-    src_nlp = spacy.blank(src_lang)
-    tgt_nlp = spacy.blank(tgt_lang)
-
     for src_sent, tgt_sent in zip(src_sentences, tgt_sentences):
-        # -- Break sentences into words
-        src_words = [t.text for t in src_nlp(src_sent)]
-        tgt_words = [t.text for t in tgt_nlp(tgt_sent)]
-        # -- Align for all source words
-        src_idxs = list(range(len(src_words)))
-        # -- Form batch for each source word
-        src_batch = [src_words] * len(src_idxs)
-        tgt_batch = [tgt_words] * len(src_idxs)
+        print("\n====================================")
+        print(f"Source ({src_lang}): {src_sent}")
+        print(f"Target ({tgt_lang}): {tgt_sent}\n")
 
-        encoding = tokenizer.encode_marked_batch(src_batch, tgt_batch, src_idxs)
-        input_ids = encoding["input_ids"]
-        attention_mask = encoding["attention_mask"]
-        target_mask = (encoding["token_type_ids"] == 1)
+        src_words, tgt_words, alignments = binaryalign.align(src_sent, tgt_sent, threshold)
 
-        # -- Run inference
-        preds = model.predict(input_ids, attention_mask, target_mask, threshold)
+        for (src_idx, src_word) in alignments:
+            print(f"({src_idx}) {src_word}: {[(i, tgt_word, s) for i, tgt_word, s in alignments[(src_idx, src_word)]]}")
 
-        print(f"preds: {preds}")
-
-
+        print("====================================")
 
 if __name__ == "__main__":
     main()

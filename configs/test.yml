@@ -13,13 +13,30 @@ inference:
   src:
     lang: en
     sentences: [
-      "Hello, my name is Logan."
+      "Good morning! How are you today?",
+      "I don't understand; can you repeat that, please?",
+      "Where is the train station, and how long does it take to get there?",
+      "I bought two apples, three bananas, and a bottle of water.",
+      "This book is interesting, but it's a little difficult.",
+      "If it rains tomorrow, we'll stay at home and watch a movie.",
+      "I have been learning French for six months.",
+      "Could you send me the file by email before 5:00 pm?",
+      "On January 6, 2026, I moved to a new apartment.",
+      "The restaurant we tried last night was expensive, yet delicious."
     ]
   tgt:
     lang: fr
     sentences: [
-      "Bonjour, je m'appelle Logan ."
+      "Bonjour ! Comment ça va aujourd'hui ?",
+      "Je ne comprends pas ; pouvez-vous répéter, s'il vous plaît ?",
+      "Où se trouve la gare, et combien de temps faut-il pour y aller ?",
+      "J'ai acheté deux pommes, trois bananes et une bouteille d'eau.",
+      "Ce livre est intéressant, mais il est un peu difficile.",
+      "S'il pleut demain, nous resterons à la maison et nous regarderons un film.",
+      "J'apprends le français depuis six mois.",
+      "Pourriez-vous m'envoyer le fichier par e-mail avant 17 h 00 ?",
+      "Le 6 janvier 2026, j'ai emménagé dans un nouvel appartement.",
+      "Le restaurant que nous avons essayé hier soir était cher, mais délicieux."
     ]
-    
   threshold: 0.5
 

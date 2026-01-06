@@ -29,7 +29,7 @@ class Trainer:
     ):
         self.model = model
         self.optimizer = optimizer
-        self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss(reduction="none")
         self.device = device
         self.train_dir = train_dir
 
@@ -91,17 +91,20 @@ class Trainer:
         input_ids = batch["input_ids"].to(self.device)
         attention_mask = batch["attention_mask"].to(self.device)
         target_mask = batch["target_mask"].to(self.device)
-        labels_target = batch["labels_target"].to(self.device)
+        labels = batch["labels"].to(self.device)
 
         # ----------
         # Forward pass
         # ----------
-        logits_target = self.model(input_ids, attention_mask, target_mask)
+        logits = self.model(input_ids, attention_mask)
 
         # ----------
-        # Compute loss / update
+        # Compute loss / mask padding & src / average
         # ----------
-        loss = self.criterion(logits_target, labels_target)
+        loss_per_token = self.criterion(logits, labels)
+        mask = target_mask & attention_mask.bool()
+        loss = loss_per_token[mask].mean()
+
         loss.backward()
         self.optimizer.step()
 

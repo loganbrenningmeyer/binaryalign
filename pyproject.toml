@@ -17,7 +17,8 @@ dependencies = [
     "tokenizers",
     "safetensors",
     "sentencepiece",
-    "protobuf"
+    "protobuf",
+    "spacy"
 ]
 
 [tool.setuptools.packages.find]
