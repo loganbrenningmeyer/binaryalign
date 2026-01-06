@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import argparse
 import spacy
@@ -77,6 +78,13 @@ def main():
     src_sentences = test_config.inference.src.sentences
     tgt_sentences = test_config.inference.tgt.sentences
 
+    align_json = {
+        "src_lang": src_lang,
+        "tgt_lang": tgt_lang,
+        "threshold": threshold,
+        "sentence_pairs": []
+    }
+
     for src_sent, tgt_sent in zip(src_sentences, tgt_sentences):
         print("\n====================================")
         print(f"Source ({src_lang}): {src_sent}")
@@ -88,6 +96,28 @@ def main():
             print(f"({src_idx}) {src_word}: {[(i, tgt_word, s) for i, tgt_word, s in alignments[(src_idx, src_word)]]}")
 
         print("====================================")
+
+        align_json["sentence_pairs"].append({
+            "src_sentence": src_sent,
+            "tgt_sentence": tgt_sent,
+            "src_words": src_words,
+            "tgt_words": tgt_words,
+            "alignments": [
+                {
+                    "src_idx": src_idx,
+                    "src_word": src_word,
+                    "aligned": [
+                        {"tgt_idx": i, "tgt_word": tgt_word, "score": float(s)}
+                        for i, tgt_word, s in alignments[(src_idx, src_word)]
+                    ]
+                }
+                for (src_idx, src_word) in alignments
+            ]
+        })
+
+    with open(test_dir / "alignments.json", "w", encoding="utf-8") as f:
+        json.dump(align_json, f, ensure_ascii=False, indent=4)
+
 
 if __name__ == "__main__":
     main()
