@@ -15,6 +15,7 @@ def load_config(config_path: str) -> DictConfig:
     config = OmegaConf.load(config_path)
     return config
 
+
 def save_config(config: DictConfig, save_path: str):
     OmegaConf.save(config, save_path)
 
@@ -43,7 +44,9 @@ def main():
     # ----------
     # Load tokenizer/backbone
     # ----------
-    tokenizer = BinaryAlignTokenizer(model_name=train_config.model.backbone, max_length=train_config.model.max_length)
+    tokenizer = BinaryAlignTokenizer(
+        model_name=train_config.model.backbone, max_length=train_config.model.max_length
+    )
     backbone = load_backbone(train_config.model.backbone, tokenizer.vocab_size)
 
     # ----------
@@ -82,38 +85,33 @@ def main():
         "src_lang": src_lang,
         "tgt_lang": tgt_lang,
         "threshold": threshold,
-        "sentence_pairs": []
+        "sentence_pairs": [],
     }
 
     for src_sent, tgt_sent in zip(src_sentences, tgt_sentences):
-        print("\n====================================")
-        print(f"Source ({src_lang}): {src_sent}")
-        print(f"Target ({tgt_lang}): {tgt_sent}\n")
+        src_words, tgt_words, src_alignments, tgt_alignments = (
+            binaryalign.align_sentence_pair(src_sent, tgt_sent, threshold)
+        )
 
-        src_words, tgt_words, alignments = binaryalign.align(src_sent, tgt_sent, threshold)
-
-        for (src_idx, src_word) in alignments:
-            print(f"({src_idx}) {src_word}: {[(i, tgt_word, s) for i, tgt_word, s in alignments[(src_idx, src_word)]]}")
-
-        print("====================================")
-
-        align_json["sentence_pairs"].append({
-            "src_sentence": src_sent,
-            "tgt_sentence": tgt_sent,
-            "src_words": src_words,
-            "tgt_words": tgt_words,
-            "alignments": [
-                {
-                    "src_idx": src_idx,
-                    "src_word": src_word,
-                    "aligned": [
-                        {"tgt_idx": i, "tgt_word": tgt_word, "score": float(s)}
-                        for i, tgt_word, s in alignments[(src_idx, src_word)]
-                    ]
-                }
-                for (src_idx, src_word) in alignments
-            ]
-        })
+        align_json["sentence_pairs"].append(
+            {
+                "src_sentence": src_sent,
+                "tgt_sentence": tgt_sent,
+                "src_words": src_words,
+                "tgt_words": tgt_words,
+                "alignments": [
+                    {
+                        "src_idx": src_idx,
+                        "src_word": src_words[src_idx],
+                        "aligned": [
+                            {"tgt_idx": i, "tgt_word": tgt_words[i]}
+                            for i in src_alignments[src_idx]
+                        ],
+                    }
+                    for src_idx in src_alignments
+                ],
+            }
+        )
 
     with open(test_dir / "alignments.json", "w", encoding="utf-8") as f:
         json.dump(align_json, f, ensure_ascii=False, indent=4)

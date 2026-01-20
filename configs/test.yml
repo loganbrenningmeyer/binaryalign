@@ -38,5 +38,5 @@ inference:
       "Le 6 janvier 2026, j'ai emménagé dans un nouvel appartement.",
       "Le restaurant que nous avons essayé hier soir était cher, mais délicieux."
     ]
-  threshold: 0.5
+  threshold: 0.1
 
