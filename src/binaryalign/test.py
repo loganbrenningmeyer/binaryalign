@@ -9,6 +9,7 @@ from omegaconf import OmegaConf, DictConfig
 from binaryalign.models import BinaryAlignClassifier, BinaryAlignModel, load_backbone
 from binaryalign.tokenization import BinaryAlignTokenizer
 from binaryalign.inference.align import BinaryAlign
+from binaryalign.tokenization import Segmenter
 
 
 def load_config(config_path: str) -> DictConfig:
@@ -71,7 +72,8 @@ def main():
     src_lang = test_config.inference.src.lang
     tgt_lang = test_config.inference.tgt.lang
 
-    binaryalign = BinaryAlign(model, tokenizer, src_lang, tgt_lang)
+    segmenter = Segmenter(src_lang, tgt_lang)
+    binaryalign = BinaryAlign(model, tokenizer)
 
     # ----------
     # Run inference on test samples
@@ -89,8 +91,11 @@ def main():
     }
 
     for src_sent, tgt_sent in zip(src_sentences, tgt_sentences):
-        src_words, tgt_words, src_alignments, tgt_alignments = (
-            binaryalign.align_sentence_pair(src_sent, tgt_sent, threshold)
+        src_words = segmenter.split_words(src_sent, src_lang)
+        tgt_words = segmenter.split_words(tgt_sent, tgt_lang)
+
+        src_alignments, tgt_alignments = (
+            binaryalign.align_sentence_pair(src_words, tgt_words, threshold)
         )
 
         align_json["sentence_pairs"].append(

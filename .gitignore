@@ -3,5 +3,5 @@ runs/
 datasets/raw/
 wandb/
 binaryalign.egg-info/
-Icon
+Icon?
 .DS_Store

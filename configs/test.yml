@@ -2,7 +2,7 @@
 # Run Configuration
 # ====================
 run:
-  name: "finetune-55000"
+  name: "finetune-55000_segmenter"
   run_dir: "./runs/french_valid_16"
   checkpoint: "model-finetune-step55000.ckpt"
 
