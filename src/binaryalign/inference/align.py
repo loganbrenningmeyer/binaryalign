@@ -1,7 +1,45 @@
 from collections import defaultdict
+from dataclasses import dataclass, field
 
 from binaryalign.models import BinaryAlignModel
-from binaryalign.tokenization import BinaryAlignTokenizer
+from binaryalign.tokenization import BinaryAlignTokenizer, Segmenter
+
+
+@dataclass
+class DomainData:
+    """ """
+
+    words: list[str] = field(default_factory=list)
+    spaces: list[str] = field(default_factory=list)
+    sent_ids: list[int] = field(default_factory=list)
+    par_ids: list[int] = field(default_factory=list)
+    sent_to_par_ids: dict[int, int] = field(default_factory=dict)
+    par_to_sent_ids: dict[int, list[int]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    sent_to_word_ids: dict[int, list[int]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    par_to_word_ids: dict[int, list[int]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+
+@dataclass
+class AlignMaps:
+    """ """
+
+    src_to_tgt: dict[int, list[int]] = field(default_factory=dict)
+    tgt_to_src: dict[int, list[int]] = field(default_factory=dict)
+
+
+@dataclass
+class AlignmentData:
+    """ """
+
+    src: DomainData = field(default_factory=DomainData)
+    tgt: DomainData = field(default_factory=DomainData)
+    align: AlignMaps = field(default_factory=AlignMaps)
 
 
 class BinaryAlign:
@@ -15,7 +53,7 @@ class BinaryAlign:
 
     def align_sentence_pair(
         self, src_words: list[str], tgt_words: list[str], threshold: float = 0.1
-    ):
+    ) -> tuple[dict[int, list[int]], dict[int, list[int]]]:
         """
 
 
@@ -80,14 +118,17 @@ class BinaryAlign:
                 src_alignments[b].append(tgt_idx)
                 tgt_alignments[tgt_idx].append(b)
 
-        return src_alignments, tgt_alignments
+        return dict(src_alignments), dict(tgt_alignments)
 
-    def align_document_pair(
+    def align_text_pair(
         self,
-        src_par_sent_words: list[list[list[str]]],
-        tgt_par_sent_words: list[list[list[str]]],
-        threshold: float = 0.1,
-    ):
+        source: str,
+        target: str,
+        src_lang: str,
+        tgt_lang: str,
+        segmenter: Segmenter,
+        threshold: float = 0.5,
+    ) -> AlignmentData:
         """
 
 
@@ -97,25 +138,17 @@ class BinaryAlign:
         Returns:
 
         """
+        out = AlignmentData()
+
+        # -------------------------
+        # Segment source / target into pars -> sents -> words
+        # -------------------------
+        src_par_sent_words = segmenter.split_par_sent_words(source, src_lang)
+        tgt_par_sent_words = segmenter.split_par_sent_words(target, tgt_lang)
+
         # -------------------------
         # Align sentence pairs / track word index offsets
         # -------------------------
-        src_words_global = []
-        tgt_words_global = []
-        src_alignments_global = {}
-        tgt_alignments_global = {}
-
-        src_par_ids = []
-        src_sent_ids = []
-        src_sent_to_par_ids = {}
-        src_par_to_sent_ids = defaultdict(list)
-
-        src_par_to_word_ids = defaultdict(list)
-        src_sent_to_word_ids = defaultdict(list)
-
-        tgt_sent_ids = []
-        tgt_par_ids = []
-
         src_offset = 0
         tgt_offset = 0
 
@@ -130,45 +163,60 @@ class BinaryAlign:
                 # -------------------------
                 # Align source / target sentence pair
                 # -------------------------
-                src_alignments, tgt_alignments = (
-                    self.align_sentence_pair(src_words, tgt_words, threshold)
+                src_alignments, tgt_alignments = self.align_sentence_pair(
+                    src_words, tgt_words, threshold
                 )
 
                 # -------------------------
                 # Fill global words
                 # -------------------------
-                src_words_global.extend(src_words)
-                tgt_words_global.extend(tgt_words)
+                out.src.words.extend(src_words)
+                out.tgt.words.extend(tgt_words)
 
                 # -------------------------
                 # Update global alignments w/ src and tgt offset indices
                 # -------------------------
                 for src_idx, tgt_idxs in src_alignments.items():
                     tgt_idxs_global = [tgt_idx + tgt_offset for tgt_idx in tgt_idxs]
-                    src_alignments_global[src_idx + src_offset] = tgt_idxs_global
+                    out.align.src_to_tgt[src_idx + src_offset] = tgt_idxs_global
 
                 for tgt_idx, src_idxs in tgt_alignments.items():
                     src_idxs_global = [src_idx + src_offset for src_idx in src_idxs]
-                    tgt_alignments_global[tgt_idx + tgt_offset] = src_idxs_global
+                    out.align.tgt_to_src[tgt_idx + tgt_offset] = src_idxs_global
 
                 # -------------------------
-                # Assign paragraph / sentence ids for src words
+                # [Source]: Assign sentence / paragraph ids
                 # -------------------------
+                out.src.par_to_sent_ids[par_id].append(sent_id)
+
                 for src_idx in range(len(src_words)):
+                    # -- Global document word index
                     src_idx_global = src_idx + src_offset
                     # -- Sentence / Paragraph IDs
-                    src_sent_ids.append(sent_id)
-                    src_par_ids.append(par_id)
+                    out.src.sent_ids.append(sent_id)
+                    out.src.par_ids.append(par_id)
                     # -- Sentence / Paragraph IDs --> Words
-                    src_sent_to_word_ids[sent_id].append(src_idx_global)
-                    src_par_to_word_ids[par_id].append(src_idx_global)
+                    out.src.sent_to_word_ids[sent_id].append(src_idx_global)
+                    out.src.par_to_word_ids[par_id].append(src_idx_global)
                     # -- Sentence <--> Paragraph Mappings
-                    src_sent_to_par_ids[sent_id] = par_id
-                    src_par_to_sent_ids[par_id].append(sent_id)
+                    out.src.sent_to_par_ids[sent_id] = par_id
+
+                # -------------------------
+                # [Target]: Assign sentence / paragraph ids
+                # -------------------------
+                out.tgt.par_to_sent_ids[par_id].append(sent_id)
 
                 for tgt_idx in range(len(tgt_words)):
-                    tgt_sent_ids.append(sent_id)
-                    tgt_par_ids.append(par_id)
+                    # -- Global document word index
+                    tgt_idx_global = tgt_idx + tgt_offset
+                    # -- Sentence / Paragraph IDs
+                    out.tgt.sent_ids.append(sent_id)
+                    out.tgt.par_ids.append(par_id)
+                    # -- Sentence / Paragraph IDs --> Words
+                    out.tgt.sent_to_word_ids[sent_id].append(tgt_idx_global)
+                    out.tgt.par_to_word_ids[par_id].append(tgt_idx_global)
+                    # -- Sentence <--> Paragraph Mappings
+                    out.tgt.sent_to_par_ids[sent_id] = par_id
 
                 # -- Update sentence id / word index offsets
                 sent_id += 1
@@ -176,20 +224,25 @@ class BinaryAlign:
                 src_offset += len(src_words)
                 tgt_offset += len(tgt_words)
 
-        return (
-            src_words_global,
-            tgt_words_global,
-            src_alignments_global,
-            tgt_alignments_global,
-            src_sent_ids,
-            src_sent_to_par_ids,
-            src_sent_to_word_ids,
-            src_par_ids,
-            src_par_to_sent_ids,
-            src_par_to_word_ids,
-            tgt_sent_ids,
-            tgt_par_ids,
-        )
+        # -------------------------
+        # Determine trailing whitespaces for source / target words
+        # -------------------------
+        out.src.spaces = segmenter.get_token_spaces(source, out.src.words)
+        out.tgt.spaces = segmenter.get_token_spaces(target, out.tgt.words)
+
+        # -------------------------
+        # Convert defaultdicts to dicts
+        # -------------------------
+        out.src.sent_to_word_ids = dict(out.src.sent_to_word_ids)
+        out.tgt.sent_to_word_ids = dict(out.tgt.sent_to_word_ids)
+
+        out.src.par_to_word_ids = dict(out.src.par_to_word_ids)
+        out.tgt.par_to_word_ids = dict(out.tgt.par_to_word_ids)
+
+        out.src.par_to_sent_ids = dict(out.src.par_to_sent_ids)
+        out.tgt.par_to_sent_ids = dict(out.tgt.par_to_sent_ids)
+
+        return out
 
     def create_batch(self, src_words: list[str], tgt_words: list[str]):
         """
